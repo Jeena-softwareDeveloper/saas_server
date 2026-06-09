@@ -19,7 +19,14 @@ async function main() {
       console.log(`✅ Success! Password for ${email} has been updated to: ${password}`);
       console.log(`✅ Role is also set to 'super_admin'.`);
     } else {
-      console.log(`❌ Error: User with email ${email} not found in the database.`);
+      console.log(`User not found. Creating a new super_admin account for ${email}...`);
+      const crypto = require('crypto');
+      const userId = crypto.randomUUID();
+      await pool.query(
+        "INSERT INTO ecommerce.users (id, name, email, password_hash, role, is_active, email_verified, created_at, updated_at) VALUES ($1, 'Super Admin', $2, $3, 'super_admin', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        [userId, email, hash]
+      );
+      console.log(`✅ Success! New Super Admin created: ${email}`);
     }
   } catch (err) {
     console.error('Error updating password:', err);
