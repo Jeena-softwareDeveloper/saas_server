@@ -39,7 +39,6 @@ export const refreshCorsDomains = async () => {
 refreshCorsDomains();
 
 const allowedOrigins = [
-  'http://localhost:5173',
   'https://saas-admin-seven.vercel.app'
 ];
 
