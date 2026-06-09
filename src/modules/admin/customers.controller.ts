@@ -330,6 +330,12 @@ export const createCustomer = async (req: Request, res: Response, next: NextFunc
         }
       });
 
+      // Update the user to also have the tenantId populated (User's request for easier filtering)
+      await tx.user.update({
+        where: { id: customer.id },
+        data: { tenantId: tenant.id }
+      });
+
       // Optionally refresh CORS globally if a domain is provided (we'll implement this helper soon)
       if (domain) {
         if ((global as any).refreshCorsDomains) {
