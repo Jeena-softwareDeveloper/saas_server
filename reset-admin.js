@@ -3,8 +3,8 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
 async function main() {
-  const email = process.argv[2] || 'admin@nexus.com';
-  const password = process.argv[3] || 'admin123';
+  const email = process.argv[2] || 'jeena2284@gmail.com';
+  const password = process.argv[3] || 'jeena.123';
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   
