@@ -225,7 +225,6 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    // Look up tenant for this admin user
     const adminTenant = await prisma.tenant.findUnique({ where: { ownerId: user.id } });
 
     res.json({
