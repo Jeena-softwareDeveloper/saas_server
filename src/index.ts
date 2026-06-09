@@ -53,7 +53,6 @@ app.use(
       if (allOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        // STRICT CORS: Block any origin not in the allowed lists (DB custom domains, Super Admin panels, etc.)
         console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }

@@ -46,10 +46,10 @@ model Tenant {
 model User {
   id              String          @id @default(uuid()) @db.Uuid
   name            String          @db.VarChar(100)
-  email           String          @unique @db.VarChar(150)
+  email           String?         @unique @db.VarChar(150)
   passwordHash    String          @map("password_hash")
   role            Role            @default(CUSTOMER)
-  phone           String?         @db.VarChar(20)
+  phone           String?         @unique @db.VarChar(20)
   profileImage    String?         @map("profile_image")
   isActive        Boolean         @default(true) @map("is_active")
   emailVerified   Boolean         @default(false) @map("email_verified")

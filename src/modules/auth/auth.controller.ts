@@ -17,11 +17,11 @@ export const register = async (req: Request, res: Response, next: NextFunction):
       return;
     }
 
-    const { name, email, password, phone } = parsed.data;
+    const { name, password, phone } = parsed.data as any;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findUnique({ where: { phone } });
     if (existing) {
-      next(createError('Email already registered', 409));
+      next(createError('Phone number already registered', 409));
       return;
     }
 
@@ -37,11 +37,11 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     }
 
     const user = await prisma.user.create({
-      data: { name, email, passwordHash: hashedPassword, phone, role: 'CUSTOMER', tenantId },
-      select: { id: true, name: true, email: true, role: true, createdAt: true, tenantId: true },
+      data: { name, passwordHash: hashedPassword, phone, role: 'CUSTOMER', tenantId },
+      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true, tenantId: true },
     });
 
-    const payload = { userId: user.id, email: user.email, role: user.role };
+    const payload = { userId: user.id, email: user.email, phone: user.phone, role: user.role };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
@@ -71,9 +71,16 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
-    const { email, password } = parsed.data;
+    const { identifier, password } = parsed.data as any;
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({ 
+      where: { 
+        OR: [
+          { email: identifier },
+          { phone: identifier }
+        ]
+      } 
+    });
     if (!user || !user.isActive) {
       next(createError('Invalid credentials', 401));
       return;
@@ -100,6 +107,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     const payload = { 
       userId: user.id, 
       email: user.email, 
+      phone: user.phone,
       role: user.role,
       tenantId: currentTenant ? currentTenant.id : user.tenantId || undefined
     };
@@ -154,9 +162,16 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
       return;
     }
 
-    const { email, password } = parsed.data;
+    const { identifier, password } = parsed.data as any;
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { phone: identifier }
+        ]
+      }
+    });
     if (!user || !user.isActive) {
       next(createError('Invalid credentials', 401));
       return;
@@ -183,6 +198,7 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
     const payload = { 
       userId: user.id, 
       email: user.email, 
+      phone: user.phone,
       role: user.role,
       tenantId: user.tenantId || userTenant?.id || undefined 
     };
@@ -193,7 +209,7 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
       data: {
         userId: user.id,
         token: refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       }
     });
 
@@ -201,12 +217,12 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: isProd,
-      maxAge: 15 * 60 * 1000 // 15 mins
+      maxAge: 15 * 60 * 1000
     });
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: isProd,
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     // Look up tenant for this admin user
