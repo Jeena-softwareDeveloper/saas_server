@@ -1,0 +1,55 @@
+{
+  "name": "ecommerce-backend",
+  "version": "1.0.0",
+  "description": "E-Commerce Platform REST API — Node.js + Express + PostgreSQL",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:studio": "npx prisma studio"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@types/crypto-js": "^4.2.2",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.6",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.10",
+    "pg": "^8.21.0",
+    "prisma": "^7.8.0",
+    "stripe": "^22.2.0",
+    "uuid": "^14.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.9.1",
+    "@types/nodemailer": "^8.0.0",
+    "@types/pg": "^8.20.0",
+    "@types/uuid": "^10.0.0",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
+  }
+}
