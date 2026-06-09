@@ -15,6 +15,17 @@ export const getAdminCustomers = async (req: Request, res: Response, next: NextF
       whereClause.role = role;
     }
 
+    // Tenant Isolation for Customers
+    const currentUser = (req as any).user;
+    const currentTenant = (req as any).tenant;
+    if (currentUser?.role === 'STORE_OWNER' && currentTenant) {
+      whereClause.tenantId = currentTenant.id;
+      // Also ensure they only see CUSTOMER roles, not other STORE_OWNERs
+      if (!role) {
+        whereClause.role = 'CUSTOMER';
+      }
+    }
+
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where: whereClause,
@@ -103,6 +114,15 @@ export const getAdminCustomer = async (req: Request, res: Response, next: NextFu
         }
       }
     });
+
+    const currentUser = (req as any).user;
+    const currentTenant = (req as any).tenant;
+    if (currentUser?.role === 'STORE_OWNER' && currentTenant && customer) {
+      if (customer.tenantId !== currentTenant.id) {
+        next(createError('Customer not found', 404));
+        return;
+      }
+    }
 
     if (!customer) {
       next(createError('Customer not found', 404));
