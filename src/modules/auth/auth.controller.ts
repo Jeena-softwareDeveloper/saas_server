@@ -27,14 +27,8 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    let tenantId: string | null = null;
-    const slug = req.headers['x-tenant-slug'] as string;
-    if (slug) {
-      const tenant = await prisma.tenant.findUnique({ where: { slug } });
-      if (tenant) {
-        tenantId = tenant.id;
-      }
-    }
+    const currentTenant = (req as any).tenant;
+    const tenantId = currentTenant ? currentTenant.id : null;
 
     const user = await prisma.user.create({
       data: { name, passwordHash: hashedPassword, phone, role: 'CUSTOMER', tenantId },
