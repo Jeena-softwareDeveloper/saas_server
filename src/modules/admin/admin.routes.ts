@@ -5,7 +5,7 @@ import { resolveTenant } from '../../middleware/tenant';
 
 import { getDashboardStats, getRecentOrders, getLowStock, getSalesChart } from './dashboard.controller';
 import { getAllCategories, createCategory, updateCategory, deleteCategory, toggleCategoryStatus } from './categories.controller';
-import { getAdminProducts, getAdminProduct, generateSku, createAdminProduct, updateAdminProduct, deleteAdminProduct, toggleProductPublish, addProductImages, removeProductImage, addProductVariant, updateProductVariant, deleteProductVariant, bulkImportProducts } from './products.controller';
+import { getAdminProducts, getAdminProduct, generateIdentifiers, createAdminProduct, updateAdminProduct, deleteAdminProduct, toggleProductPublish, addProductImages, removeProductImage, addProductVariant, updateProductVariant, deleteProductVariant, bulkImportProducts } from './products.controller';
 import { getInventory, updateInventory } from './inventory.controller';
 import { getAdminOrders, getAdminOrder, updateAdminOrderStatus, initiateOrderRefund } from './orders.controller';
 import { getAdminCustomers, getAdminCustomer, updateCustomerStatus, createCustomer, getClientIntegrations, updateClientIntegrations, resetEncryptionKey, resetStoreKey, resetCustomerPassword, deleteAdminCustomer } from './customers.controller';
@@ -57,7 +57,7 @@ router.delete('/categories/:id', deleteCategory);
 router.patch('/categories/:id/toggle', toggleCategoryStatus);
 
 router.get('/products', getAdminProducts);
-router.get('/products/generate-sku', generateSku);
+router.get('/products/generate-identifiers', generateIdentifiers);
 router.get('/products/:id', getAdminProduct);
 router.post('/products', upload.array('images', 5), createAdminProduct);
 router.put('/products/:id', upload.array('images', 5), updateAdminProduct);

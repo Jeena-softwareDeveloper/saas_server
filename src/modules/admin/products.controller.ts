@@ -61,7 +61,7 @@ export const getAdminProduct = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const generateSku = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const generateIdentifiers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     let shopPrefix = 'GEN';
     
@@ -90,7 +90,9 @@ export const generateSku = async (req: Request, res: Response, next: NextFunctio
     const prodNumber = String(count + 1).padStart(4, '0');
 
     const sku = `${shopPrefix}-${dateString}-${prodNumber}`;
-    res.json({ success: true, data: { sku } });
+    const barcode = `890${dateString.substring(2)}${prodNumber}`;
+    
+    res.json({ success: true, data: { sku, barcode } });
   } catch (err) {
     next(err);
   }
@@ -238,12 +240,11 @@ export const deleteAdminProduct = async (req: Request, res: Response, next: Next
   try {
     const id = req.params['id'] as string;
     
-    const product = await prisma.product.update({
-      where: { id },
-      data: { isPublished: false }
+    await prisma.product.delete({
+      where: { id }
     });
 
-    res.json({ success: true, message: 'Product soft deleted' });
+    res.json({ success: true, message: 'Product deleted successfully' });
   } catch (err) {
     next(err);
   }
