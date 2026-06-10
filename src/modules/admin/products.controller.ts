@@ -63,23 +63,33 @@ export const getAdminProduct = async (req: Request, res: Response, next: NextFun
 
 export const generateSku = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { categoryId } = req.query;
+    let shopPrefix = 'GEN';
     
-    let catPrefix = 'GEN';
-    if (categoryId && typeof categoryId === 'string') {
-      const category = await prisma.category.findUnique({ where: { id: categoryId } });
-      if (category && category.name) {
-        catPrefix = category.name.substring(0, 3).toUpperCase();
-      }
+    const userId = (req as any).user?.userId;
+    const userTenantId = (req as any).user?.tenantId;
+    
+    let tenant = null;
+    if (userTenantId) {
+      tenant = await prisma.tenant.findUnique({ where: { id: userTenantId } });
+    } else if (userId) {
+      tenant = await prisma.tenant.findUnique({ where: { ownerId: userId } });
+    }
+
+    if (tenant && tenant.name) {
+      shopPrefix = tenant.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
+      if (shopPrefix.length === 0) shopPrefix = 'GEN';
     }
 
     const date = new Date();
     const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
     
-    const count = await prisma.product.count();
+    const count = await prisma.product.count({
+      where: tenant ? { tenantId: tenant.id } : {}
+    });
+    
     const prodNumber = String(count + 1).padStart(4, '0');
 
-    const sku = `${catPrefix}-${dateString}-${prodNumber}`;
+    const sku = `${shopPrefix}-${dateString}-${prodNumber}`;
     res.json({ success: true, data: { sku } });
   } catch (err) {
     next(err);
@@ -155,7 +165,7 @@ export const createAdminProduct = async (req: AuthRequest, res: Response, next: 
     res.status(201).json({
       success: true,
       message: 'Product created',
-      data: { id: product.id, name: product.name, slug: product.slug, is_published: product.isPublished }
+      data: product
     });
   } catch (err) {
     next(err);
