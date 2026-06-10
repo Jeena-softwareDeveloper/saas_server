@@ -294,22 +294,66 @@ export const removeProductImage = async (req: Request, res: Response, next: Next
 export const addProductVariant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = req.params['id'] as string;
-    const { variantName, sku, price, stockQuantity, attributes } = req.body;
+    const {
+      variantName, sku, price, compareAtPrice, stockQuantity, attributes,
+      description, tags, weight,
+      gstPercentage, shippingCharge, codCharge, isCodEnabled, isPublished, isFeatured
+    } = req.body;
 
     if (!variantName) { next(createError('Variant name is required', 400)); return; }
+
+    // Upload variant images
+    const files = req.files as Express.Multer.File[] | undefined;
+    const uploadedImages: string[] = [];
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const url = await uploadToS3(file.buffer, file.originalname, file.mimetype, 'ecommerce', ((req as any).user?.tenantId || null));
+        uploadedImages.push(url);
+      }
+    }
+
+    const tagsArray = tags ? tags.split(',').map((t: string) => t.trim()) : [];
 
     const variant = await prisma.productVariant.create({
       data: {
         productId: id,
         variantName,
         sku: sku || null,
-        price: price || null,
+        price: price ? parseFloat(price) : null,
+        compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
         stockQuantity: stockQuantity ? parseInt(stockQuantity) : 0,
-        attributes: attributes ? JSON.parse(attributes) : null
-      }
+        attributes: attributes ? JSON.parse(attributes) : null,
+        description: description || null,
+        tags: tagsArray,
+        weight: weight ? parseFloat(weight) : null,
+        gstPercentage: gstPercentage ? parseInt(gstPercentage) : 0,
+        shippingCharge: shippingCharge ? parseFloat(shippingCharge) : 0,
+        codCharge: codCharge ? parseFloat(codCharge) : 0,
+        isCodEnabled: isCodEnabled !== undefined ? (isCodEnabled === 'true' || isCodEnabled === true) : true,
+        isPublished: isPublished !== undefined ? (isPublished === 'true' || isPublished === true) : true,
+        isFeatured: isFeatured === 'true' || isFeatured === true,
+        images: {
+          create: uploadedImages.map((url, i) => ({
+            imageUrl: url,
+            isPrimary: i === 0,
+            sortOrder: i
+          }))
+        }
+      },
+      include: { images: true }
     });
 
     res.status(201).json({ success: true, data: variant });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteProductVariant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const vid = req.params['vid'] as string;
+    await prisma.productVariant.delete({ where: { id: vid } });
+    res.json({ success: true, message: 'Variant deleted' });
   } catch (err) {
     next(err);
   }

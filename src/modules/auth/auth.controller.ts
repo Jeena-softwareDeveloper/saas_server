@@ -76,7 +76,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       } 
     });
     if (!user || !user.isActive) {
-      next(createError('Invalid credentials', 401));
+      next(createError('Account not found or inactive', 401));
       return;
     }
 
@@ -94,7 +94,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      next(createError('Invalid credentials', 401));
+      next(createError('Incorrect password', 401));
       return;
     }
 
@@ -167,7 +167,7 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
       }
     });
     if (!user || !user.isActive) {
-      next(createError('Invalid credentials', 401));
+      next(createError('Account not found or inactive', 401));
       return;
     }
 
@@ -178,7 +178,7 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      next(createError('Invalid credentials', 401));
+      next(createError('Incorrect password', 401));
       return;
     }
 

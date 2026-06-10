@@ -5,7 +5,7 @@ import { resolveTenant } from '../../middleware/tenant';
 
 import { getDashboardStats, getRecentOrders, getLowStock, getSalesChart } from './dashboard.controller';
 import { getAllCategories, createCategory, updateCategory, deleteCategory, toggleCategoryStatus } from './categories.controller';
-import { getAdminProducts, getAdminProduct, generateSku, createAdminProduct, updateAdminProduct, deleteAdminProduct, toggleProductPublish, addProductImages, removeProductImage, addProductVariant, updateProductVariant, bulkImportProducts } from './products.controller';
+import { getAdminProducts, getAdminProduct, generateSku, createAdminProduct, updateAdminProduct, deleteAdminProduct, toggleProductPublish, addProductImages, removeProductImage, addProductVariant, updateProductVariant, deleteProductVariant, bulkImportProducts } from './products.controller';
 import { getInventory, updateInventory } from './inventory.controller';
 import { getAdminOrders, getAdminOrder, updateAdminOrderStatus, initiateOrderRefund } from './orders.controller';
 import { getAdminCustomers, getAdminCustomer, updateCustomerStatus, createCustomer, getClientIntegrations, updateClientIntegrations, resetEncryptionKey, resetStoreKey, resetCustomerPassword, deleteAdminCustomer } from './customers.controller';
@@ -65,8 +65,9 @@ router.delete('/products/:id', deleteAdminProduct);
 router.patch('/products/:id/publish', toggleProductPublish);
 router.post('/products/:id/images', upload.array('images', 5), addProductImages);
 router.delete('/products/:id/images/:imgId', removeProductImage);
-router.post('/products/:id/variants', addProductVariant);
+router.post('/products/:id/variants', upload.array('images', 10), addProductVariant);
 router.put('/products/:id/variants/:vid', updateProductVariant);
+router.delete('/products/:id/variants/:vid', deleteProductVariant);
 router.post('/products/bulk-import', upload.single('file'), bulkImportProducts);
 
 router.get('/inventory', getInventory);
