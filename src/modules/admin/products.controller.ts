@@ -63,8 +63,23 @@ export const getAdminProduct = async (req: Request, res: Response, next: NextFun
 
 export const generateSku = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const { categoryId } = req.query;
+    
+    let catPrefix = 'GEN';
+    if (categoryId && typeof categoryId === 'string') {
+      const category = await prisma.category.findUnique({ where: { id: categoryId } });
+      if (category && category.name) {
+        catPrefix = category.name.substring(0, 3).toUpperCase();
+      }
+    }
+
+    const date = new Date();
+    const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+    
     const count = await prisma.product.count();
-    const sku = `SKU-${1001 + count}`;
+    const prodNumber = String(count + 1).padStart(4, '0');
+
+    const sku = `${catPrefix}-${dateString}-${prodNumber}`;
     res.json({ success: true, data: { sku } });
   } catch (err) {
     next(err);
