@@ -342,7 +342,7 @@ export const addProductVariant = async (req: Request, res: Response, next: NextF
 
     const variant = await prisma.productVariant.create({
       data: {
-        productId: id,
+        product: { connect: { id } },
         variantName,
         sku: sku || null,
         price: price ? parseFloat(price) : null,
