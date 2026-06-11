@@ -388,15 +388,32 @@ export const deleteProductVariant = async (req: Request, res: Response, next: Ne
 export const updateProductVariant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const vid = req.params['vid'] as string;
-    const { price, stockQuantity } = req.body;
+    const {
+      variantName, sku, price, compareAtPrice, stockQuantity,
+      weight, gstPercentage, shippingCharge, codCharge,
+      isCodEnabled, isPublished, isFeatured, description, tags
+    } = req.body;
 
     const updateData: any = {};
-    if (price !== undefined) updateData.price = price;
+    if (variantName !== undefined) updateData.variantName = variantName;
+    if (sku !== undefined) updateData.sku = sku || null;
+    if (price !== undefined) updateData.price = price ? parseFloat(price) : null;
+    if (compareAtPrice !== undefined) updateData.compareAtPrice = compareAtPrice ? parseFloat(compareAtPrice) : null;
     if (stockQuantity !== undefined) updateData.stockQuantity = parseInt(stockQuantity);
+    if (weight !== undefined) updateData.weight = weight ? parseFloat(weight) : null;
+    if (gstPercentage !== undefined) updateData.gstPercentage = parseInt(gstPercentage);
+    if (shippingCharge !== undefined) updateData.shippingCharge = parseFloat(shippingCharge);
+    if (codCharge !== undefined) updateData.codCharge = parseFloat(codCharge);
+    if (isCodEnabled !== undefined) updateData.isCodEnabled = isCodEnabled === 'true' || isCodEnabled === true;
+    if (isPublished !== undefined) updateData.isPublished = isPublished === 'true' || isPublished === true;
+    if (isFeatured !== undefined) updateData.isFeatured = isFeatured === 'true' || isFeatured === true;
+    if (description !== undefined) updateData.description = description || null;
+    if (tags !== undefined) updateData.tags = tags ? tags.split(',').map((t: string) => t.trim()) : [];
 
     const variant = await prisma.productVariant.update({
       where: { id: vid },
-      data: updateData
+      data: updateData,
+      include: { images: true }
     });
 
     res.json({ success: true, data: variant });
@@ -404,6 +421,7 @@ export const updateProductVariant = async (req: Request, res: Response, next: Ne
     next(err);
   }
 };
+
 
 export const bulkImportProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -445,3 +463,49 @@ export const bulkImportProducts = async (req: Request, res: Response, next: Next
     next(err);
   }
 };
+
+export const getProductByBarcode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const barcode = req.params['barcode'] as string;
+
+    // Search in products by SKU first
+    let product = await prisma.product.findFirst({
+      where: { sku: barcode },
+      include: {
+        category: { select: { name: true } },
+        images: { select: { imageUrl: true, isPrimary: true }, take: 1 },
+        variants: { include: { images: { take: 1 } } }
+      }
+    });
+
+    if (product) {
+      res.json({ success: true, data: { type: 'product', product } });
+      return;
+    }
+
+    // Search in variants by SKU
+    const variant = await prisma.productVariant.findFirst({
+      where: { sku: barcode },
+      include: {
+        product: {
+          include: {
+            category: { select: { name: true } },
+            images: { select: { imageUrl: true, isPrimary: true }, take: 1 },
+            variants: { include: { images: { take: 1 } } }
+          }
+        },
+        images: { take: 1 }
+      }
+    });
+
+    if (variant) {
+      res.json({ success: true, data: { type: 'variant', variant, product: variant.product } });
+      return;
+    }
+
+    next(createError('No product found for this barcode', 404));
+  } catch (err) {
+    next(err);
+  }
+};
+
