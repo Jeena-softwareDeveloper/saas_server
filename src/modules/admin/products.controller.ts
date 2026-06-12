@@ -267,51 +267,18 @@ export const toggleProductPublish = async (req: Request, res: Response, next: Ne
   }
 };
 
-export const addProductImages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const id = req.params['id'] as string;
-    const files = req.files as Express.Multer.File[] | undefined;
-    
-    if (!files || files.length === 0) {
-      next(createError('No images provided', 400));
-      return;
-    }
 
-    const existingImages = await prisma.productImage.count({ where: { productId: id } });
-
-    const newImages = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const url = await uploadToS3(file.buffer, file.originalname, file.mimetype, 'ecommerce', ((req as any).user?.tenantId || null));
-      
-      const img = await prisma.productImage.create({
-        data: {
-          productId: id,
-          imageUrl: url,
-          isPrimary: existingImages === 0 && i === 0,
-          sortOrder: existingImages + i
-        }
-      });
-      newImages.push({ id: img.id, image_url: img.imageUrl, is_primary: img.isPrimary });
-    }
-
-    res.status(201).json({ success: true, message: 'Images added', data: newImages });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const removeProductImage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const removeVariantImage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const imgId = req.params['imgId'] as string;
     
-    const img = await prisma.productImage.findUnique({ where: { id: imgId } });
+    const img = await prisma.variantImage.findUnique({ where: { id: imgId } });
     if (img) {
       await deleteFromS3(img.imageUrl).catch(() => {});
-      await prisma.productImage.delete({ where: { id: imgId } });
+      await prisma.variantImage.delete({ where: { id: imgId } });
     }
 
-    res.json({ success: true, message: 'Image removed' });
+    res.json({ success: true, message: 'Variant image removed' });
   } catch (err) {
     next(err);
   }
