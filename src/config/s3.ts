@@ -1,5 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import prisma from './db';
+import fs from 'fs';
+import path from 'path';
 
 // Global Fallback Configuration
 cloudinary.config({
@@ -82,20 +84,21 @@ export const uploadToS3 = async (
         const url = await doUpload(options);
         resolve(url);
       } catch (err) {
-        if (tenantConfig) {
-          console.warn('Tenant Cloudinary upload failed, falling back to global config:', err);
-          try {
-            const globalOptions = { ...options };
-            delete globalOptions.cloud_name;
-            delete globalOptions.api_key;
-            delete globalOptions.api_secret;
-            const url = await doUpload(globalOptions);
-            resolve(url);
-          } catch (globalErr) {
-            reject(globalErr);
+        console.warn('Cloudinary upload failed, falling back to local filesystem:', err);
+        try {
+          const uploadsDir = path.join(__dirname, '../../public/uploads', folder);
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
           }
-        } else {
-          reject(err);
+          const ext = originalName.split('.').pop() || 'png';
+          const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+          const filepath = path.join(uploadsDir, filename);
+          fs.writeFileSync(filepath, buffer);
+          // Return the local URL
+          const baseUrl = process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5000}`;
+          resolve(`${baseUrl}/uploads/${folder}/${filename}`);
+        } catch (localErr) {
+          reject(localErr);
         }
       }
     } catch (e) {

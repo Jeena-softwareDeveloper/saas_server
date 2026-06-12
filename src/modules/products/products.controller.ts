@@ -61,21 +61,48 @@ export const getProducts = async (req: Request, res: Response, next: NextFunctio
         include: {
           category: { select: { id: true, name: true, slug: true } },
           reviews: { select: { rating: true } },
-          images: { select: { imageUrl: true, isPrimary: true } }
+          images: { select: { imageUrl: true, isPrimary: true } },
+          variants: { select: { price: true, compareAtPrice: true, images: { select: { imageUrl: true, isPrimary: true } } } }
         },
       }),
       prisma.product.count({ where: where as any }),
     ]);
 
-    const productsWithRating = products.map((p) => ({
-      ...p,
-      avgRating:
-        p.reviews.length > 0
-          ? p.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / p.reviews.length
-          : 0,
-      reviewCount: p.reviews.length,
-      reviews: undefined,
-    }));
+    const productsWithRating = products.map((p) => {
+      let displayPrice = Number(p.price);
+      let displayComparePrice = p.comparePrice ? Number(p.comparePrice) : null;
+      if (displayPrice === 0 && p.variants && p.variants.length > 0) {
+        const lowestVariant = p.variants.reduce((min, v) => (Number(v.price) < Number(min.price) ? v : min), p.variants[0]);
+        displayPrice = Number(lowestVariant.price);
+        displayComparePrice = lowestVariant.compareAtPrice ? Number(lowestVariant.compareAtPrice) : null;
+      }
+      let displayImages = p.images;
+      if (!displayImages || displayImages.length === 0) {
+        if (p.variants && p.variants.length > 0) {
+          for (const variant of p.variants) {
+            const vImage = (variant as any).images?.find((i: any) => i.isPrimary) || (variant as any).images?.[0];
+            if (vImage) {
+              displayImages = [vImage];
+              break;
+            }
+          }
+        }
+      }
+      
+      return {
+        ...p,
+        price: displayPrice,
+        comparePrice: displayComparePrice,
+        images: displayImages,
+        avgRating:
+          p.reviews.length > 0
+            ? p.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / p.reviews.length
+            : 0,
+        reviewCount: p.reviews.length,
+        reviews: undefined,
+        variants: undefined,
+      };
+    });
 
     res.json({
       success: true,
@@ -105,6 +132,7 @@ export const getProduct = async (req: Request, res: Response, next: NextFunction
       include: {
         category: { select: { id: true, name: true, slug: true } },
         images: true,
+        variants: { include: { images: true } },
         reviews: {
           include: { user: { select: { id: true, name: true, profileImage: true } } },
           orderBy: { createdAt: 'desc' },
@@ -127,6 +155,7 @@ export const getProduct = async (req: Request, res: Response, next: NextFunction
         include: {
           category: { select: { id: true, name: true, slug: true } },
           images: true,
+          variants: { include: { images: true } },
           reviews: {
             include: { user: { select: { id: true, name: true, profileImage: true } } },
             orderBy: { createdAt: 'desc' },
@@ -146,7 +175,20 @@ export const getProduct = async (req: Request, res: Response, next: NextFunction
         ? reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviews.length
         : 0;
 
-    res.json({ success: true, data: { ...product, avgRating } });
+    let displayImages = product.images;
+    if (!displayImages || displayImages.length === 0) {
+      if ((product as any).variants && (product as any).variants.length > 0) {
+        for (const variant of (product as any).variants) {
+          const vImage = variant.images?.find((i: any) => i.isPrimary) || variant.images?.[0];
+          if (vImage) {
+            displayImages = [vImage];
+            break;
+          }
+        }
+      }
+    }
+
+    res.json({ success: true, data: { ...product, images: displayImages, avgRating } });
   } catch (err) {
     next(err);
   }
@@ -181,12 +223,44 @@ export const searchProducts = async (req: Request, res: Response, next: NextFunc
         where,
         skip,
         take: limitNum,
-        include: { images: { select: { imageUrl: true, isPrimary: true } } }
+        include: {
+          images: { select: { imageUrl: true, isPrimary: true } },
+          variants: { select: { price: true, compareAtPrice: true, images: { select: { imageUrl: true, isPrimary: true } } } }
+        }
       }),
       prisma.product.count({ where })
     ]);
 
-    res.json({ success: true, data: { data: products, total, page: pageNum, limit: limitNum } });
+    const mappedProducts = products.map((p) => {
+      let displayPrice = Number(p.price);
+      let displayComparePrice = p.comparePrice ? Number(p.comparePrice) : null;
+      if (displayPrice === 0 && p.variants && p.variants.length > 0) {
+        const lowestVariant = p.variants.reduce((min, v) => (Number(v.price) < Number(min.price) ? v : min), p.variants[0]);
+        displayPrice = Number(lowestVariant.price);
+        displayComparePrice = lowestVariant.compareAtPrice ? Number(lowestVariant.compareAtPrice) : null;
+      }
+      let displayImages = p.images;
+      if (!displayImages || displayImages.length === 0) {
+        if (p.variants && p.variants.length > 0) {
+          for (const variant of p.variants) {
+            const vImage = (variant as any).images?.find((i: any) => i.isPrimary) || (variant as any).images?.[0];
+            if (vImage) {
+              displayImages = [vImage];
+              break;
+            }
+          }
+        }
+      }
+      return {
+        ...p,
+        price: displayPrice,
+        comparePrice: displayComparePrice,
+        images: displayImages,
+        variants: undefined
+      };
+    });
+
+    res.json({ success: true, data: { data: mappedProducts, total, page: pageNum, limit: limitNum } });
   } catch (err) {
     next(err);
   }

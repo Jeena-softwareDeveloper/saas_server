@@ -26,7 +26,8 @@ export const getAdminProducts = async (req: Request, res: Response, next: NextFu
         orderBy: { createdAt: 'desc' },
         include: {
           category: { select: { name: true } },
-          images: { select: { imageUrl: true, isPrimary: true } }
+          images: { select: { imageUrl: true, isPrimary: true } },
+          variants: { select: { id: true } }
         }
       }),
       prisma.product.count({ where })
@@ -284,6 +285,28 @@ export const removeVariantImage = async (req: Request, res: Response, next: Next
   }
 };
 
+export const setPrimaryVariantImage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const vid = req.params['vid'] as string;
+    const imgId = req.params['imgId'] as string;
+    
+    await prisma.$transaction([
+      prisma.variantImage.updateMany({
+        where: { variantId: vid },
+        data: { isPrimary: false }
+      }),
+      prisma.variantImage.update({
+        where: { id: imgId },
+        data: { isPrimary: true }
+      })
+    ]);
+
+    res.json({ success: true, message: 'Primary image set successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const addProductVariant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = req.params['id'] as string;
@@ -337,8 +360,12 @@ export const addProductVariant = async (req: Request, res: Response, next: NextF
     });
 
     res.status(201).json({ success: true, data: variant });
-  } catch (err) {
-    next(err);
+  } catch (err: any) {
+    if (err.code === 'P2002') {
+      next(createError(`A variant with this ${err.meta?.target?.[0] || 'SKU'} already exists.`, 400));
+    } else {
+      next(err);
+    }
   }
 };
 
@@ -384,8 +411,12 @@ export const updateProductVariant = async (req: Request, res: Response, next: Ne
     });
 
     res.json({ success: true, data: variant });
-  } catch (err) {
-    next(err);
+  } catch (err: any) {
+    if (err.code === 'P2002') {
+      next(createError(`A variant with this ${err.meta?.target?.[0] || 'SKU'} already exists.`, 400));
+    } else {
+      next(err);
+    }
   }
 };
 
@@ -476,3 +507,114 @@ export const getProductByBarcode = async (req: Request, res: Response, next: Nex
   }
 };
 
+export const createProductAttributes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const productId = req.params['id'] as string;
+    const { attributes } = req.body; // [{ name: 'Color', values: ['Red', 'Blue'] }]
+    const tenantId = (req as any).user?.tenantId || null;
+
+    if (!attributes || !Array.isArray(attributes)) {
+      next(createError('Invalid attributes format', 400));
+      return;
+    }
+
+    // Clear existing attributes for this product (full replace)
+    await prisma.productAttribute.deleteMany({ where: { productId } });
+
+    for (let i = 0; i < attributes.length; i++) {
+      const attr = attributes[i];
+      const createdAttr = await prisma.productAttribute.create({
+        data: {
+          tenantId,
+          productId,
+          name: attr.name,
+          position: i,
+          values: {
+            create: attr.values.map((val: string) => ({
+              tenantId,
+              value: val
+            }))
+          }
+        }
+      });
+    }
+
+    res.json({ success: true, message: 'Attributes saved successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const bulkCreateVariants = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const productId = req.params['id'] as string;
+    const { variants } = req.body;
+    const tenantId = (req as any).user?.tenantId || null;
+
+    if (!variants || !Array.isArray(variants)) {
+      next(createError('Invalid variants format', 400));
+      return;
+    }
+
+    const createdVariants = [];
+    for (const v of variants) {
+      const variant = await prisma.productVariant.create({
+        data: {
+          tenantId,
+          productId,
+          variantName: v.variantName,
+          sku: v.sku,
+          barcode: v.barcode,
+          price: v.price ? parseFloat(v.price) : null,
+          compareAtPrice: v.compareAtPrice ? parseFloat(v.compareAtPrice) : null,
+          costPrice: v.costPrice ? parseFloat(v.costPrice) : null,
+          weight: v.weight ? parseFloat(v.weight) : null,
+          stockQuantity: v.stockQuantity ? parseInt(v.stockQuantity) : 0,
+        }
+      });
+      createdVariants.push(variant);
+    }
+
+    res.json({ success: true, message: 'Variants created', data: createdVariants });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const bulkUpdateInventory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const productId = req.params['id'] as string;
+    const { inventoryData } = req.body; // [{ variantId, locationId, stockQuantity }]
+    const tenantId = (req as any).user?.tenantId || null;
+
+    if (!inventoryData || !Array.isArray(inventoryData)) {
+      next(createError('Invalid inventory format', 400));
+      return;
+    }
+
+    for (const item of inventoryData) {
+      await prisma.inventoryLevel.upsert({
+        where: {
+          variantId_locationId: {
+            variantId: item.variantId,
+            locationId: item.locationId
+          }
+        },
+        update: {
+          stockQuantity: parseInt(item.stockQuantity),
+          tenantId
+        },
+        create: {
+          tenantId,
+          variantId: item.variantId,
+          locationId: item.locationId,
+          stockQuantity: parseInt(item.stockQuantity)
+        }
+      });
+    }
+
+    res.json({ success: true, message: 'Inventory updated' });
+  } catch (err) {
+    next(err);
+  }
+};

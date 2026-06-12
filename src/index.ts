@@ -20,44 +20,11 @@ import prisma from './config/db';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Dynamic CORS Domains Cache
-let allowedCustomDomains: string[] = [];
-
-export const refreshCorsDomains = async () => {
-  try {
-    const tenants = await prisma.tenant.findMany({
-      where: { domain: { not: null } },
-      select: { domain: true },
-    });
-    allowedCustomDomains = tenants.map((t: { domain: string | null }) => t.domain as string);
-    console.log('Dynamic CORS domains refreshed:', allowedCustomDomains);
-  } catch (err) {
-    console.error('Failed to refresh CORS domains', err);
-  }
-};
-(global as any).refreshCorsDomains = refreshCorsDomains;
-refreshCorsDomains();
-
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'https://saas-admin-seven.vercel.app'
-];
-
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const envOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
-      const allOrigins = [...allowedOrigins, ...envOrigins, ...allowedCustomDomains];
-      
-      if (allOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
-      }
+      // Dynamically allow all origins to support unlimited decoupled SaaS UI deployments
+      callback(null, true);
     },
     credentials: true,
   })
@@ -67,6 +34,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+import path from 'path';
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 app.get('/health', (_req, res) => {
   res.json({

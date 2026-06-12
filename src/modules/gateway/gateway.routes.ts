@@ -47,9 +47,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // Construct local target URL
+    // Construct local target URL — gateway always loops back to itself on 127.0.0.1
     const targetPath = url.startsWith('/api') ? url : `/api${url.startsWith('/') ? url : '/' + url}`;
-    const localUrl = `http://localhost:${PORT}${targetPath}${queryStr}`;
+    const localUrl = `http://127.0.0.1:${PORT}${targetPath}${queryStr}`;
 
     // 4. Forward headers from original request
     const headers: Record<string, string> = {};

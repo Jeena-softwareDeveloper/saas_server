@@ -9,47 +9,35 @@ datasource db {
 }
 
 model Tenant {
-  id                String             @id @default(uuid()) @db.Uuid
-  name              String             @db.VarChar(100)
-  slug              String             @unique @db.VarChar(120)
-  ownerId           String             @unique @map("owner_id") @db.Uuid
-  isActive          Boolean            @default(true) @map("is_active")
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
-  domain            String?            @unique @db.VarChar(120)
-  monthlyFee        Float              @default(0) @map("monthly_fee")
-  serverFee         Float              @default(0) @map("server_fee")
-  totalPaid         Float              @default(0) @map("total_paid")
-  encryptionKey     String?            @map("encryption_key") @db.VarChar(255)
-  storeKey          String?            @unique @default(uuid()) @map("store_key") @db.Uuid
-  banners           Banner[]
-  blogs             Blog[]
-  menuItems         MenuItem[]
-  categories        Category[]
-  certifications    Certification[]
-  clientPayments    ClientPayment[]
-  coupons           Coupon[]
-  notifications     Notification[]
-  orders            Order[]
-  products          Product[]
-  siteConfigs       SiteConfig[]
-  supportTickets    SupportTicket[]
-  owner             User               @relation("TenantOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  customers         User[]             @relation("TenantCustomers")
-  activityLogs      ActivityLog[]
-  activeSessions    ActiveSession[]
-  productImages     ProductImage[]
-  productVariants   ProductVariant[]
-  productAttributes ProductAttribute[]
-  attributeValues   AttributeValue[]
-  locations         Location[]
-  inventoryLevels   InventoryLevel[]
-  cartItems         CartItem[]
-  wishlistItems     WishlistItem[]
-  reviews           Review[]
-  orderItems        OrderItem[]
-  variantImages     VariantImage[]
-  refreshTokens     RefreshToken[]
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String          @db.VarChar(100)
+  slug           String          @unique @db.VarChar(120)
+  ownerId        String          @unique @map("owner_id") @db.Uuid
+  isActive       Boolean         @default(true) @map("is_active")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamp(6)
+  domain         String?         @unique @db.VarChar(120)
+  monthlyFee     Float           @default(0) @map("monthly_fee")
+  serverFee      Float           @default(0) @map("server_fee")
+  totalPaid      Float           @default(0) @map("total_paid")
+  encryptionKey  String?         @map("encryption_key") @db.VarChar(255)
+  storeKey       String?         @unique @default(uuid()) @map("store_key") @db.Uuid
+  banners        Banner[]
+  blogs          Blog[]
+  menuItems      MenuItem[]
+  categories     Category[]
+  certifications Certification[]
+  clientPayments ClientPayment[]
+  coupons        Coupon[]
+  notifications  Notification[]
+  orders         Order[]
+  products       Product[]
+  siteConfigs    SiteConfig[]
+  supportTickets SupportTicket[]
+  owner          User            @relation("TenantOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  customers      User[]          @relation("TenantCustomers")
+  activityLogs   ActivityLog[]
+  activeSessions ActiveSession[]
 
   @@map("tenants")
   @@schema("ecommerce")
@@ -84,7 +72,6 @@ model User {
   activityLogs    ActivityLog[]
   activeSessions  ActiveSession[]
 
-  @@index([tenantId])
   @@map("users")
   @@schema("ecommerce")
 }
@@ -95,11 +82,8 @@ model RefreshToken {
   token     String   @unique
   expiresAt DateTime @map("expires_at") @db.Timestamp(6)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  tenantId  String?  @map("tenant_id") @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("refresh_tokens")
   @@schema("ecommerce")
 }
@@ -123,53 +107,48 @@ model Category {
   tenant      Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   products    Product[]
 
-  @@index([tenantId])
   @@unique([tenantId, slug])
   @@map("categories")
   @@schema("ecommerce")
 }
 
 model Product {
-  id                String             @id @default(uuid()) @db.Uuid
-  categoryId        String?            @map("category_id") @db.Uuid
-  name              String             @db.VarChar(200)
-  slug              String             @db.VarChar(220)
+  id                String           @id @default(uuid()) @db.Uuid
+  categoryId        String?          @map("category_id") @db.Uuid
+  name              String           @db.VarChar(200)
+  slug              String           @db.VarChar(220)
   description       String?
-  shortDesc         String?            @map("short_desc") @db.VarChar(500)
-  sku               String?            @db.VarChar(80)
-  price             Decimal            @db.Decimal(10, 2)
-  comparePrice      Decimal?           @map("compare_price") @db.Decimal(10, 2)
-  costPrice         Decimal?           @map("cost_price") @db.Decimal(10, 2)
-  stockQuantity     Int                @default(0) @map("stock_quantity")
-  lowStockThreshold Int                @default(5) @map("low_stock_threshold")
-  isPublished       Boolean            @default(true) @map("is_published")
-  isFeatured        Boolean            @default(false) @map("is_featured")
-  weight            Decimal?           @db.Decimal(8, 2)
+  shortDesc         String?          @map("short_desc") @db.VarChar(500)
+  sku               String?          @db.VarChar(80)
+  price             Decimal          @db.Decimal(10, 2)
+  comparePrice      Decimal?         @map("compare_price") @db.Decimal(10, 2)
+  costPrice         Decimal?         @map("cost_price") @db.Decimal(10, 2)
+  stockQuantity     Int              @default(0) @map("stock_quantity")
+  lowStockThreshold Int              @default(5) @map("low_stock_threshold")
+  isPublished       Boolean          @default(true) @map("is_published")
+  isFeatured        Boolean          @default(false) @map("is_featured")
+  weight            Decimal?         @db.Decimal(8, 2)
   tags              String[]
-  metaTitle         String?            @map("meta_title") @db.VarChar(200)
-  metaDescription   String?            @map("meta_description")
-  createdBy         String?            @map("created_by") @db.Uuid
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
-  codCharge         Decimal?           @default(0) @map("cod_charge") @db.Decimal(10, 2)
-  gstPercentage     Int?               @default(0) @map("gst_percentage")
-  isCodEnabled      Boolean            @default(true) @map("is_cod_enabled")
-  shippingCharge    Decimal?           @default(0) @map("shipping_charge") @db.Decimal(10, 2)
-  tenantId          String?            @map("tenant_id") @db.Uuid
-  status            ProductStatus      @default(DRAFT)
+  metaTitle         String?          @map("meta_title") @db.VarChar(200)
+  metaDescription   String?          @map("meta_description")
+  createdBy         String?          @map("created_by") @db.Uuid
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+  codCharge         Decimal?         @default(0) @map("cod_charge") @db.Decimal(10, 2)
+  gstPercentage     Int?             @default(0) @map("gst_percentage")
+  isCodEnabled      Boolean          @default(true) @map("is_cod_enabled")
+  shippingCharge    Decimal?         @default(0) @map("shipping_charge") @db.Decimal(10, 2)
+  tenantId          String?          @map("tenant_id") @db.Uuid
   cartItems         CartItem[]
   orderItems        OrderItem[]
   images            ProductImage[]
   variants          ProductVariant[]
-  category          Category?          @relation(fields: [categoryId], references: [id])
-  creator           User?              @relation(fields: [createdBy], references: [id])
-  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category          Category?        @relation(fields: [categoryId], references: [id])
+  creator           User?            @relation(fields: [createdBy], references: [id])
+  tenant            Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   reviews           Review[]
   wishlistItems     WishlistItem[]
-  attributes        ProductAttribute[]
 
-  @@index([tenantId])
-  @@index([tenantId, isPublished, createdAt])
   @@unique([tenantId, slug])
   @@unique([tenantId, sku])
   @@map("products")
@@ -177,56 +156,43 @@ model Product {
 }
 
 model ProductImage {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String?  @map("tenant_id") @db.Uuid
-  productId String   @map("product_id") @db.Uuid
-  imageUrl  String   @map("image_url") @db.VarChar(500)
-  altText   String?  @map("alt_text") @db.VarChar(200)
-  isPrimary Boolean  @default(false) @map("is_primary")
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id        String  @id @default(uuid()) @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  imageUrl  String  @map("image_url")
+  altText   String? @map("alt_text") @db.VarChar(200)
+  isPrimary Boolean @default(false) @map("is_primary")
+  sortOrder Int     @default(0) @map("sort_order")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("product_images")
   @@schema("ecommerce")
 }
 
 model ProductVariant {
-  id              String               @id @default(uuid()) @db.Uuid
-  tenantId        String?              @map("tenant_id") @db.Uuid
-  productId       String               @map("product_id") @db.Uuid
-  variantName     String               @map("variant_name") @db.VarChar(200)
-  sku             String?              @unique @db.VarChar(100)
-  barcode         String?              @db.VarChar(100)
-  price           Decimal?             @db.Decimal(12, 2)
-  compareAtPrice  Decimal?             @map("compare_at_price") @db.Decimal(12, 2)
-  costPrice       Decimal?             @map("cost_price") @db.Decimal(12, 2)
-  stockQuantity   Int                  @default(0) @map("stock_quantity")
+  id              String           @id @default(uuid()) @db.Uuid
+  productId       String           @map("product_id") @db.Uuid
+  variantName     String           @map("variant_name") @db.VarChar(200)
+  sku             String?          @db.VarChar(80)
+  price           Decimal?         @db.Decimal(10, 2)
+  compareAtPrice  Decimal?         @map("compare_at_price") @db.Decimal(10, 2)
+  stockQuantity   Int              @default(0) @map("stock_quantity")
   description     String?
   tags            String[]
-  weight          Decimal?             @db.Decimal(10, 2)
-  imageUrl        String?              @map("image_url") @db.VarChar(500)
-  status          VariantStatus        @default(ACTIVE)
-  gstPercentage   Int?                 @default(0) @map("gst_percentage")
-  shippingCharge  Decimal?             @default(0) @map("shipping_charge") @db.Decimal(10, 2)
-  codCharge       Decimal?             @default(0) @map("cod_charge") @db.Decimal(10, 2)
-  isCodEnabled    Boolean              @default(true) @map("is_cod_enabled")
-  isPublished     Boolean              @default(true) @map("is_published")
-  isFeatured      Boolean              @default(false) @map("is_featured")
+  weight          Decimal?         @db.Decimal(8, 2)
+  gstPercentage   Int?             @default(0) @map("gst_percentage")
+  shippingCharge  Decimal?         @default(0) @map("shipping_charge") @db.Decimal(10, 2)
+  codCharge       Decimal?         @default(0) @map("cod_charge") @db.Decimal(10, 2)
+  isCodEnabled    Boolean          @default(true) @map("is_cod_enabled")
+  isPublished     Boolean          @default(true) @map("is_published")
+  isFeatured      Boolean          @default(false) @map("is_featured")
   attributes      Json?
-  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamp(6)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
   cartItems       CartItem[]
   orderItems      OrderItem[]
   images          VariantImage[]
-  product         Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
-  tenant          Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  optionValues    VariantOptionValue[]
-  inventoryLevels InventoryLevel[]
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("product_variants")
   @@schema("ecommerce")
 }
@@ -237,11 +203,8 @@ model VariantImage {
   imageUrl  String         @map("image_url")
   isPrimary Boolean        @default(false) @map("is_primary")
   sortOrder Int            @default(0) @map("sort_order")
-  tenantId  String?        @map("tenant_id") @db.Uuid
   variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  tenant    Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("variant_images")
   @@schema("ecommerce")
 }
@@ -253,13 +216,10 @@ model CartItem {
   variantId String?         @map("variant_id") @db.Uuid
   quantity  Int             @default(1)
   addedAt   DateTime        @default(now()) @map("added_at") @db.Timestamp(6)
-  tenantId  String?         @map("tenant_id") @db.Uuid
   product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
-  tenant    Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@unique([userId, productId, variantId])
   @@map("cart_items")
   @@schema("ecommerce")
@@ -270,12 +230,9 @@ model WishlistItem {
   userId    String   @map("user_id") @db.Uuid
   productId String   @map("product_id") @db.Uuid
   addedAt   DateTime @default(now()) @map("added_at") @db.Timestamp(6)
-  tenantId  String?  @map("tenant_id") @db.Uuid
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@unique([userId, productId])
   @@map("wishlist_items")
   @@schema("ecommerce")
@@ -306,8 +263,6 @@ model Order {
   tenant            Tenant?       @relation(fields: [tenantId], references: [id])
   user              User?         @relation(fields: [userId], references: [id])
 
-  @@index([tenantId])
-  @@index([tenantId, createdAt(sort: Desc)])
   @@map("orders")
   @@schema("ecommerce")
 }
@@ -321,13 +276,10 @@ model OrderItem {
   quantity    Int
   unitPrice   Decimal         @map("unit_price") @db.Decimal(10, 2)
   totalPrice  Decimal         @map("total_price") @db.Decimal(10, 2)
-  tenantId    String?         @map("tenant_id") @db.Uuid
   order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product     Product?        @relation(fields: [productId], references: [id])
   variant     ProductVariant? @relation(fields: [variantId], references: [id])
-  tenant      Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("order_items")
   @@schema("ecommerce")
 }
@@ -361,12 +313,9 @@ model Review {
   body       String?
   isApproved Boolean  @default(true) @map("is_approved")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  tenantId   String?  @map("tenant_id") @db.Uuid
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@unique([userId, productId])
   @@map("reviews")
   @@schema("ecommerce")
@@ -387,7 +336,6 @@ model Coupon {
   tenant            Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   orders            Order[]
 
-  @@index([tenantId])
   @@unique([tenantId, code])
   @@map("coupons")
   @@schema("ecommerce")
@@ -402,7 +350,6 @@ model SiteConfig {
   tenantId  String?  @map("tenant_id") @db.Uuid
   tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@unique([tenantId, key])
   @@map("site_config")
   @@schema("ecommerce")
@@ -422,7 +369,6 @@ model Banner {
   category   Category? @relation(fields: [categoryId], references: [id])
   tenant     Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("banners")
   @@schema("ecommerce")
 }
@@ -440,7 +386,6 @@ model MenuItem {
   category   Category? @relation(fields: [categoryId], references: [id])
   tenant     Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("menu_items")
   @@schema("ecommerce")
 }
@@ -458,7 +403,6 @@ model Blog {
   tenantId    String?  @map("tenant_id") @db.Uuid
   tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@unique([tenantId, slug])
   @@map("blogs")
   @@schema("ecommerce")
@@ -476,7 +420,6 @@ model Certification {
   tenantId  String?  @map("tenant_id") @db.Uuid
   tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("certifications")
   @@schema("ecommerce")
 }
@@ -496,7 +439,6 @@ model SupportTicket {
   tenant    Tenant?             @relation(fields: [tenantId], references: [id])
   user      User?               @relation(fields: [userId], references: [id])
 
-  @@index([tenantId])
   @@map("support_tickets")
   @@schema("ecommerce")
 }
@@ -512,7 +454,6 @@ model Notification {
   tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("notifications")
   @@schema("ecommerce")
 }
@@ -526,7 +467,6 @@ model ClientPayment {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@map("client_payments")
   @@schema("ecommerce")
 }
@@ -582,14 +522,12 @@ model ActivityLog {
   userId    String?  @map("user_id") @db.Uuid
   action    String   @db.VarChar(100) // 'PAGE_VIEW', 'PRODUCT_CREATED', 'CUSTOMER_REGISTERED', etc.
   entity    String?  @db.VarChar(100) // 'Page', 'Product', 'User', etc.
-  details   Json? // e.g., { path: '/admin/products', duration: 120, name: 'T-Shirt' }
+  details   Json?    // e.g., { path: '/admin/products', duration: 120, name: 'T-Shirt' }
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
-  @@index([tenantId, createdAt(sort: Desc)])
   @@map("activity_logs")
   @@schema("ecommerce")
 }
@@ -605,120 +543,10 @@ model ActiveSession {
   lastActive DateTime @default(now()) @map("last_active") @db.Timestamp(6)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant     Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
-  @@index([tenantId, lastActive(sort: Desc)])
   @@unique([sessionId, path])
   @@map("active_sessions")
-  @@schema("ecommerce")
-}
-
-enum ProductStatus {
-  DRAFT
-  ACTIVE
-  ARCHIVED
-
-  @@schema("ecommerce")
-}
-
-enum VariantStatus {
-  ACTIVE
-  OUT_OF_STOCK
-
-  @@schema("ecommerce")
-}
-
-enum LocationType {
-  WAREHOUSE
-  STORE
-
-  @@schema("ecommerce")
-}
-
-enum LocationStatus {
-  ACTIVE
-  INACTIVE
-
-  @@schema("ecommerce")
-}
-
-model ProductAttribute {
-  id        String           @id @default(uuid()) @db.Uuid
-  tenantId  String?          @map("tenant_id") @db.Uuid
-  productId String           @map("product_id") @db.Uuid
-  name      String           @db.VarChar(100)
-  position  Int              @default(0)
-  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
-  product   Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  tenant    Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  values    AttributeValue[]
-
-  @@index([tenantId])
-  @@map("product_attributes")
-  @@schema("ecommerce")
-}
-
-model AttributeValue {
-  id              String               @id @default(uuid()) @db.Uuid
-  tenantId        String?              @map("tenant_id") @db.Uuid
-  attributeId     String               @map("attribute_id") @db.Uuid
-  value           String               @db.VarChar(100)
-  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamp(6)
-  attribute       ProductAttribute     @relation(fields: [attributeId], references: [id], onDelete: Cascade)
-  tenant          Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  variantMappings VariantOptionValue[]
-
-  @@index([tenantId])
-  @@map("attribute_values")
-  @@schema("ecommerce")
-}
-
-model VariantOptionValue {
-  id               String         @id @default(uuid()) @db.Uuid
-  variantId        String         @map("variant_id") @db.Uuid
-  attributeValueId String         @map("attribute_value_id") @db.Uuid
-  variant          ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
-
-  @@map("variant_option_values")
-  @@schema("ecommerce")
-}
-
-model Location {
-  id        String           @id @default(uuid()) @db.Uuid
-  tenantId  String?          @map("tenant_id") @db.Uuid
-  name      String           @db.VarChar(255)
-  type      LocationType     @default(WAREHOUSE)
-  status    LocationStatus   @default(ACTIVE)
-  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
-  tenant    Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  inventory InventoryLevel[]
-
-  @@index([tenantId])
-  @@map("locations")
-  @@schema("ecommerce")
-}
-
-model InventoryLevel {
-  id               String         @id @default(uuid()) @db.Uuid
-  tenantId         String?        @map("tenant_id") @db.Uuid
-  variantId        String         @map("variant_id") @db.Uuid
-  locationId       String         @map("location_id") @db.Uuid
-  stockQuantity    Int            @default(0) @map("stock_quantity")
-  reservedQuantity Int            @default(0) @map("reserved_quantity")
-  reorderLevel     Int            @default(0) @map("reorder_level")
-  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
-  variant          ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  location         Location       @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  tenant           Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
-  @@unique([variantId, locationId])
-  @@map("inventory_levels")
   @@schema("ecommerce")
 }

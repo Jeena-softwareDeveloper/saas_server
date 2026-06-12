@@ -269,9 +269,7 @@ export const updateCustomerStatus = async (req: Request, res: Response, next: Ne
         });
       }
 
-      if (domain !== undefined && (global as any).refreshCorsDomains) {
-        (global as any).refreshCorsDomains();
-      }
+      // CORS is dynamically permissive now, no need to refresh cache
     }
 
     res.json({ success: true, data: { is_active: customer.isActive, role: customer.role, permissions: customer.permissions, shopName: customer.shopName, name: customer.name, phone: customer.phone } });
@@ -356,12 +354,7 @@ export const createCustomer = async (req: Request, res: Response, next: NextFunc
         data: { tenantId: tenant.id }
       });
 
-      // Optionally refresh CORS globally if a domain is provided (we'll implement this helper soon)
-      if (domain) {
-        if ((global as any).refreshCorsDomains) {
-          (global as any).refreshCorsDomains();
-        }
-      }
+      // CORS is dynamically permissive now, no need to refresh cache
 
       // Upload logo if file is provided
       let finalLogoUrl = logoUrl || '';

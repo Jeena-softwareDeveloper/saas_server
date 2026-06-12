@@ -10,7 +10,10 @@ export const getHomepageData = async (req: Request, res: Response, next: NextFun
       prisma.product.findMany({
         where: { isPublished: true, isFeatured: true, tenantId },
         take: 8,
-        include: { images: { select: { imageUrl: true, isPrimary: true } } }
+        include: {
+          images: { select: { imageUrl: true, isPrimary: true } },
+          variants: { select: { price: true, compareAtPrice: true, images: { select: { imageUrl: true, isPrimary: true } } } }
+        }
       }),
       prisma.category.findMany({
         where: { isActive: true, tenantId, parentId: null },
@@ -21,7 +24,10 @@ export const getHomepageData = async (req: Request, res: Response, next: NextFun
         where: { isPublished: true, tenantId },
         orderBy: { createdAt: 'desc' },
         take: 8,
-        include: { images: { select: { imageUrl: true, isPrimary: true } } }
+        include: {
+          images: { select: { imageUrl: true, isPrimary: true } },
+          variants: { select: { price: true, compareAtPrice: true, images: { select: { imageUrl: true, isPrimary: true } } } }
+        }
       }),
       prisma.banner.findMany({
         where: { isActive: true, tenantId },
@@ -54,13 +60,42 @@ export const getHomepageData = async (req: Request, res: Response, next: NextFun
       categoryName: b.category?.name || null,
     }));
 
+    const mapProductPrice = (p: any) => {
+      let displayPrice = Number(p.price);
+      let displayComparePrice = p.comparePrice ? Number(p.comparePrice) : null;
+      if (displayPrice === 0 && p.variants && p.variants.length > 0) {
+        const lowestVariant = p.variants.reduce((min: any, v: any) => (Number(v.price) < Number(min.price) ? v : min), p.variants[0]);
+        displayPrice = Number(lowestVariant.price);
+        displayComparePrice = lowestVariant.compareAtPrice ? Number(lowestVariant.compareAtPrice) : null;
+      }
+      let displayImages = p.images;
+      if (!displayImages || displayImages.length === 0) {
+        if (p.variants && p.variants.length > 0) {
+          for (const variant of p.variants) {
+            const vImage = variant.images?.find((i: any) => i.isPrimary) || variant.images?.[0];
+            if (vImage) {
+              displayImages = [vImage];
+              break;
+            }
+          }
+        }
+      }
+      return {
+        ...p,
+        price: displayPrice,
+        comparePrice: displayComparePrice,
+        images: displayImages,
+        variants: undefined
+      };
+    };
+
     res.json({
       success: true,
       data: {
-        featured,
+        featured: featured.map(mapProductPrice),
         categories,
         banners,
-        new_arrivals: newArrivals,
+        new_arrivals: newArrivals.map(mapProductPrice),
         reviews,
         blogs,
         certifications

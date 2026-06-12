@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/db';
 import { createError } from './errorHandler';
 
+/** Store keys that are treated as localhost/dev (no tenant lookup via key) */
+const LOCAL_STORE_KEYS = (process.env.LOCAL_BYPASS_KEYS || 'localhost,127.0.0.1').split(',').map(k => k.trim());
+const isLocalKey = (key: string) => LOCAL_STORE_KEYS.includes(key);
+
+
 /**
  * Resolves the tenant for the currently authenticated admin user.
  * 
@@ -22,7 +27,7 @@ export const resolveTenant = async (req: Request, res: Response, next: NextFunct
 
     const providedStoreKey = req.headers['x-store-key'] as string;
 
-    if (providedStoreKey && providedStoreKey !== 'localhost' && providedStoreKey !== '127.0.0.1') {
+    if (providedStoreKey && !isLocalKey(providedStoreKey)) {
       tenant = await prisma.tenant.findFirst({
         where: { storeKey: providedStoreKey }
       });
@@ -74,7 +79,7 @@ export const resolveStoreTenant = async (req: Request, res: Response, next: Next
     const storeKey = req.headers['x-store-key'] as string;
     
     let tenant = null;
-    if (storeKey && storeKey !== 'localhost' && storeKey !== '127.0.0.1') {
+    if (storeKey && !isLocalKey(storeKey)) {
       tenant = await prisma.tenant.findFirst({
         where: { storeKey: storeKey }
       });
